@@ -11,3 +11,13 @@ reports/*.csv
 reports/*.md
 !docs/results.md
 .DS_Store
+
+# Generated / vendored OpenPLC build output
+plc/openplc_project/build/
+
+# Local tooling and private notes
+.claude/
+.hypothesis/
+.env
+.env.*
+docs/resume_alignment.md
