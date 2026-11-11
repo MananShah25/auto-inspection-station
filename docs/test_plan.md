@@ -48,3 +48,16 @@ The harness drives scenarios through named I/O signals from `harness.modbus_clie
 | `assert_no_simultaneous_outputs` | Verify pusher extend and retract are never on together. |
 | `assert_record_written` | Verify traceability row creation and contents. |
 
+
+## Stateful Property Test
+
+The 24 scenarios drive the station in orders a person anticipated. `tests/test_station_stateful.py` complements them with a Hypothesis `RuleBasedStateMachine` that generates arbitrary input sequences against the in-memory model.
+
+- The oracle is written from `docs/state_machine.md` and `plc/io_map.md` (transition table, output rules, fault codes, counter rules), not from the model's code.
+- `sim.io_simulator._now_ms` is patched with a fake clock, so sequences run in milliseconds instead of sleeping.
+- Most runs leave E-stop and guard alone and a minority attack them, so deep states are reached as well as safety trips.
+- A coverage test checks that every state is reached, and a known-good flow checks the oracle raises no false alarms.
+- Two deterministic regression tests pin the defects it found (conveyor ignoring downstream-clear, stuck-sensor timer overwriting the E-stop fault code).
+- Set `STATION_EXAMPLES` to change the number of generated sequences (default 1500).
+
+Fault 160 (extend and retract commanded together) has no scenario, because the in-memory model cannot produce that condition.

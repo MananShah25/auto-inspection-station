@@ -21,3 +21,6 @@ plc/openplc_project/build/
 .env
 .env.*
 docs/resume_alignment.md
+
+# Private notes
+notes/

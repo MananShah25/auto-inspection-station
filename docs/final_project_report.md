@@ -121,6 +121,11 @@ Integration testing exposed and corrected several genuine control and integratio
 5. Simulation serial/failure-reason values were not initially mapped into canonical PLC inputs.
 6. The harness reset the failure reason after assigning it for a reject cycle.
 
+A later stateful property test (`tests/test_station_stateful.py`) found two more defects, both in the Python model rather than the ladder program:
+
+7. The model ran the conveyor in `PASS_RELEASE` even when `IN_DOWNSTREAM_CLEAR` was false. The ladder rung already included that contact.
+8. The stuck-sensor timer kept running while the station was already faulted and overwrote an active E-stop fault code (100) with 140.
+
 These findings demonstrate why observable state, named Modbus signals, and repeatable scenario tests are useful even for a compact station.
 
 ## 6. How This Project Should Be Documented
