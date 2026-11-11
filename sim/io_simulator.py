@@ -143,7 +143,7 @@ class InMemoryBackend:
                 self._set_state(StateCode.REJECT_EXTEND)
 
     def _tick_unit_stuck(self, now: int, inputs: dict[str, bool | int]) -> None:
-        if self.unit_release_monitor_since_ms is None:
+        if self.unit_release_monitor_since_ms is None or self._state() == StateCode.FAULT:
             return
         if not inputs["UNIT_AT_INSPECTION"]:
             self.unit_release_monitor_since_ms = None
@@ -191,7 +191,8 @@ class InMemoryBackend:
             extend = False
             retract = False
 
-        self._set_output("CONVEYOR_RUN", not fault and all_safe and state in {StateCode.READY, StateCode.PASS_RELEASE})
+        conveyor_permitted = state == StateCode.READY or (state == StateCode.PASS_RELEASE and inputs["DOWNSTREAM_CLEAR"])
+        self._set_output("CONVEYOR_RUN", not fault and all_safe and conveyor_permitted)
         self._set_output("PUSHER_EXTEND", not fault and extend and not retract)
         self._set_output("PUSHER_RETRACT", not fault and retract and not extend)
         self._set_output(
