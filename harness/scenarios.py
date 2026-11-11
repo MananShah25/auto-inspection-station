@@ -303,16 +303,15 @@ def start_station(client: StationClient) -> None:
     assert_state_within(client, StateCode.READY)
 
 
-def enter_inspecting(client: StationClient, serial: int) -> None:
+def enter_inspecting(client: StationClient, serial: int, fail_reason: int = 0) -> None:
     client.write_register("SIM_UNIT_SERIAL_IN", serial)
-    client.write_register("SIM_FAIL_REASON_IN", 0)
+    client.write_register("SIM_FAIL_REASON_IN", fail_reason)
     client.write_coil("SIM_UNIT_AT_INSPECTION", True)
     assert_state_within(client, StateCode.INSPECTING)
 
 
 def enter_reject_extend(client: StationClient, serial: int, fail_reason: int) -> None:
-    enter_inspecting(client, serial)
-    client.write_register("SIM_FAIL_REASON_IN", fail_reason)
+    enter_inspecting(client, serial, fail_reason)
     client.write_coil("SIM_VISION_PASS", False)
     client.write_coil("SIM_VISION_RESULT_VALID", True)
     assert_state_within(client, StateCode.REJECT_EXTEND)
@@ -325,6 +324,7 @@ def run_pass_unit(
     clear_unit: bool = True,
 ) -> None:
     before = ctx.client.read_register("TOTAL_UNITS")
+    ctx.logger.mark_cycle_started()
     enter_inspecting(ctx.client, serial)
     ctx.client.write_coil("SIM_VISION_PASS", True)
     ctx.client.write_coil("SIM_VISION_RESULT_VALID", True)
@@ -342,6 +342,7 @@ def run_pass_unit(
 def run_fail_unit(ctx: ScenarioContext, serial: int, fail_reason: int, settle_s: float = 0.05) -> None:
     before_units = ctx.client.read_register("TOTAL_UNITS")
     before_rejects = ctx.client.read_register("TOTAL_REJECTS")
+    ctx.logger.mark_cycle_started()
     enter_reject_extend(ctx.client, serial, fail_reason)
     ctx.client.write_coil("SIM_PUSHER_RETRACTED", False)
     time.sleep(settle_s)

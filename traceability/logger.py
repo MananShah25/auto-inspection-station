@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,7 @@ class TraceabilityLogger:
     db_path: Path
     station_id: str = "AIS-001"
     last_total_units: int = 0
+    cycle_started_at: float | None = None
 
     def __post_init__(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -32,6 +34,9 @@ class TraceabilityLogger:
         with sqlite3.connect(self.db_path) as conn:
             conn.executescript(schema)
 
+    def mark_cycle_started(self) -> None:
+        self.cycle_started_at = time.monotonic()
+
     def poll(self, client: StationClient) -> bool:
         total_units = client.read_register("TOTAL_UNITS")
         if total_units <= self.last_total_units:
@@ -41,6 +46,8 @@ class TraceabilityLogger:
         result_code = ResultCode(client.read_register("LAST_RESULT"))
         fail_reason_code = client.read_register("LAST_FAIL_REASON")
         cycle_time_ms = client.read_register("LAST_CYCLE_TIME_MS")
+        if self.cycle_started_at is not None:
+            cycle_time_ms = max(1, int((time.monotonic() - self.cycle_started_at) * 1000))
         result = "PASS" if result_code == ResultCode.PASS else "FAIL"
         fail_reason = FAIL_REASONS.get(fail_reason_code, f"reason_{fail_reason_code}") if result == "FAIL" else None
 
@@ -61,6 +68,7 @@ class TraceabilityLogger:
                 ),
             )
         self.last_total_units = total_units
+        self.cycle_started_at = None
         return True
 
     def rows(self) -> list[dict[str, object]]:

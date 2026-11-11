@@ -23,7 +23,7 @@ docs/                 State machine, test plan, and generated results
 
 ## Current Status
 
-Implemented:
+Implemented and verified:
 
 - `plc/io_map.md`
 - `docs/state_machine.md`
@@ -33,15 +33,18 @@ Implemented:
 - traceability logger/schema/queries
 - report writer
 - pytest checks
+- OpenPLC Runtime v4 deployment through Docker
+- live Modbus TCP control through host port `1502`
+- state/fault telemetry, counters, last-unit registers, and live SQLite traceability
+- 24/24 simulator scenario passes and representative live PLC validation
 
-Pending manual OpenPLC gates:
+Variable-entry source of truth:
 
-- Install OpenPLC Editor and Runtime.
-- Draw the ladder logic from `plc/ladder_rung_spec.md`.
-- Export `plc/inspection_station.st` and `plc/inspection_station.xml`.
-- Load the program into OpenPLC Runtime.
-- Confirm Modbus TCP is reachable at `localhost:502`.
-- Run the harness against `--backend openplc`.
+- `plc/openplc_variables.tsv` contains 89 variables, excluding the header row.
+- `plc/openplc_var_declarations.txt` contains the same 89 variables as a pasteable IEC declaration block.
+- This is the simulator-first set. It intentionally omits the physical `%IX`/`%IW` variables so the first working OpenPLC pass can be driven through writable `SIM_*` Modbus signals.
+
+For the complete implementation and evidence summary, see `docs/final_project_report.md`.
 
 ## Setup
 
@@ -86,10 +89,20 @@ Do not commit `docs/results.md` unless the run was actually executed and reviewe
 After OpenPLC Runtime is loaded and reachable:
 
 ```bash
-.venv/bin/python -m harness.runner --backend openplc --host localhost --port 502 --unit-id 1
+.venv/bin/python -m harness.runner --backend openplc --host localhost --port 1502 --unit-id 1
 ```
 
 The harness uses the writable `SIM_*` Modbus layer defined in `plc/io_map.md` so tests can drive the PLC over Modbus without requiring writes to read-only `%IX` or `%IW` areas.
+
+After a clean OpenPLC upload, re-enable the `modbus_slave` runtime plugin before using the live endpoint.
+
+## Run Live Traceability Demo
+
+```bash
+.venv/bin/python -m harness.live_traceability --host localhost --port 1502
+```
+
+This runs a live pass and reject cycle and writes demonstration records to `traceability/live_traceability.sqlite3`.
 
 ## Traceability Queries
 
@@ -100,7 +113,7 @@ The logger writes rows when it observes `TOTAL_UNITS` increment and then reads:
 - `LAST_SERIAL`
 - `LAST_RESULT`
 - `LAST_FAIL_REASON`
-- `LAST_CYCLE_TIME_MS`
+- `LAST_CYCLE_TIME_MS`, with a host-measured cycle duration used when the PLC register is not populated
 
 ## Interview Talking Points
 
@@ -110,4 +123,3 @@ The logger writes rows when it observes `TOTAL_UNITS` increment and then reads:
 - Why the harness uses writable simulation coils/registers instead of trying to write `%IX`/`%IW`.
 - How state, counters, and traceability records are observed through Modbus.
 - How simulator-first testing reduces debugging risk before loading OpenPLC.
-
