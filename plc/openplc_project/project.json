@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "name": "inspection_station",
+    "type": "plc-project"
+  },
+  "data": {
+    "dataTypes": [],
+    "pous": [],
+    "configuration": {
+      "resource": {
+        "tasks": [
+          {
+            "name": "task0",
+            "triggering": "Cyclic",
+            "interval": "T#20ms",
+            "priority": 1
+          }
+        ],
+        "instances": [
+          {
+            "name": "instance0",
+            "task": "task0",
+            "program": "main"
+          }
+        ],
+        "globalVariables": []
+      }
+    },
+    "libraries": [],
+    "debugVariables": {
+      "pous": {
+        "main": [
+          "S_IDLE",
+          "S_READY",
+          "S_INSPECTING",
+          "S_FAULT",
+          "IN_ESTOP_OK_NC",
+          "IN_GUARD_CLOSED_NC",
+          "IN_AUTO_MODE",
+          "IN_CYCLE_START",
+          "IN_PUSHER_RETRACTED",
+          "START_RISE",
+          "ALL_SAFE"
+        ]
+      }
+    }
+  }
+}
